@@ -46,51 +46,6 @@ Display the confusion matrix, classification report, and predictions.
 ### Register Number: 212224230044
 
 ```python
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-from torch.utils.data import TensorDataset, DataLoader
-
-data = pd.read_csv("/content/customers.csv")
-data.head()
-
-data.columns
-
-data = data.drop(columns=["ID"])
-data.fillna({"Work_Experience": 0, "Family_Size": data["Family_Size"].median()}, inplace=True)
-categorical_columns = ["Gender", "Ever_Married", "Graduated", "Profession", "Spending_Score", "Var_1"]
-for col in categorical_columns:
-    data[col] = LabelEncoder().fit_transform(data[col])
-
-label_encoder = LabelEncoder()
-data["Segmentation"] = label_encoder.fit_transform(data["Segmentation"])  # A, B, C, D -> 0, 1, 2, 3
-
-X = data.drop(columns=["Segmentation"])
-y = data["Segmentation"].values
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-
-X_train = torch.tensor(X_train, dtype=torch.float32)
-X_test = torch.tensor(X_test, dtype=torch.float32)
-y_train = torch.tensor(y_train, dtype=torch.long)
-y_test = torch.tensor(y_test, dtype=torch.long)
-
-train_dataset = TensorDataset(X_train, y_train)
-test_dataset = TensorDataset(X_test, y_test)
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=16)
-
-
 class PeopleClassifier(nn.Module):
     def __init__(self, input_size):
         super(PeopleClassifier, self).__init__()
@@ -105,11 +60,16 @@ class PeopleClassifier(nn.Module):
         #x = F.relu(self.fc3(x))
         x = self.fc3(x)  # No activation, CrossEntropyLoss applies Softmax internally
         return x
-
+```
+```python
+# Initialize the Model, Loss Function, and Optimizer
 model = PeopleClassifier(input_size=X_train.shape[1])
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.01)
-
+train_model(model, train_loader, criterion, optimizer, epochs=100)
+```
+```python
+#function to train the model
 def train_model(model, train_loader, criterion, optimizer, epochs):
   for epoch in range(epochs):
     model.train()
@@ -123,55 +83,6 @@ def train_model(model, train_loader, criterion, optimizer, epochs):
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
 
-model = PeopleClassifier(input_size=X_train.shape[1])
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.01)
-train_model(model, train_loader, criterion, optimizer, epochs=100)
-
-model.eval()
-predictions, actuals = [], []
-with torch.no_grad():
-    for X_batch, y_batch in test_loader:
-        outputs = model(X_batch)
-        _, predicted = torch.max(outputs, 1)
-        predictions.extend(predicted.numpy())
-        actuals.extend(y_batch.numpy())
-
-accuracy = accuracy_score(actuals, predictions)*100
-conf_matrix = confusion_matrix(actuals, predictions)
-class_report = classification_report(actuals, predictions, target_names=[str(i) for i in label_encoder.classes_])
-
-        
-print("NAME:CHARUKESH S")
-print("REG NO: 212224230044")
-print(f'Test Accuracy: {accuracy:.2f}%')
-
-print("NAME:CHARUKESH S")
-print("REG NO: 212224230044")
-print("\nConfusion Matrix:\n", conf_matrix)
-
-print("NAME:CHARUKESH S")
-print("REG NO: 212224230044")
-print("\nClassification Report:\n", class_report)
-
-import seaborn as sns
-import matplotlib.pyplot as plt
-sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_,fmt='g')
-plt.xlabel("Predicted Labels")
-plt.ylabel("True Labels")
-plt.title("Confusion Matrix")
-plt.show()
-
-print("NAME:CHARUKESH S")
-print("REG NO: 212224230044")
-sample_input = X_test[12].clone().unsqueeze(0).detach().type(torch.float32)
-with torch.no_grad():
-    output = model(sample_input)
-    predicted_class_index = torch.argmax(output[0]).item()
-    predicted_class_label = label_encoder.inverse_transform([predicted_class_index])[0]
-
-print(f'Predicted class for sample input: {predicted_class_label}')
-print(f'Actual class for sample input: {label_encoder.inverse_transform([y_test[12].item()])[0]}')
 
 ```
 ## Dataset Information
