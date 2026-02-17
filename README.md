@@ -51,13 +51,13 @@ class PeopleClassifier(nn.Module):
         super(PeopleClassifier, self).__init__()
         self.fc1 = nn.Linear(input_size, 16)
         self.fc2 = nn.Linear(16, 8)
-        #self.fc3 = nn.Linear(16, 8)
+        self.fc3 = nn.Linear(16, 8)
         self.fc3 = nn.Linear(8, 4)  # 4 output classes (A, B, C, D)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        #x = F.relu(self.fc3(x))
+        x = F.relu(self.fc3(x))
         x = self.fc3(x)  # No activation, CrossEntropyLoss applies Softmax internally
         return x
 ```
